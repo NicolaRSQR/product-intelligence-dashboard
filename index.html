@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Intelligence | Rolling Square SA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --text-secondary: #6b7280;
+      --accent: #6c63ff;
+      --accent-hover: #5a52e0;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --border: #e5e7eb;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    body {
+      font-family: 'Montserrat', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.5; -webkit-font-smoothing: antialiased;
+    }
+
+    .app { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px; background: var(--text); color: white;
+      padding: 24px 16px; display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .sidebar-logo { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 8px; }
+    .sidebar-sub { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 32px; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      color: rgba(255,255,255,0.6); text-decoration: none;
+      font-size: 13px; font-weight: 500; transition: all 0.15s; cursor: pointer;
+    }
+    .sidebar-link:hover, .sidebar-link.active { background: rgba(255,255,255,0.1); color: white; }
+    .sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* Main */
+    .main { flex: 1; margin-left: 240px; padding: 32px; max-width: 1200px; }
+    .page-title { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .page-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+
+    /* Cards */
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .card-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .card-value { font-size: 28px; font-weight: 800; color: var(--text); }
+    .card-detail { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    .sentiment-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 12px; gap: 2px; }
+    .sentiment-bar .positive { background: var(--success); border-radius: 4px; }
+    .sentiment-bar .neutral { background: #d1d5db; border-radius: 4px; }
+    .sentiment-bar .negative { background: var(--danger); border-radius: 4px; }
+    .sentiment-bar .frustrated { background: var(--warning); border-radius: 4px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px; border: none;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-approve { background: #d1fae5; color: #065f46; }
+    .btn-approve:hover { background: #a7f3d0; }
+    .btn-reject { background: #fee2e2; color: var(--danger); }
+    .btn-reject:hover { background: #fecaca; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+    /* Inputs */
+    .input, .select {
+      padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+      font-family: inherit; font-size: 13px; background: var(--surface); color: var(--text);
+    }
+    .input:focus { outline: none; border-color: var(--accent); }
+
+    /* Tables */
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
+    td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    /* Tags */
+    .tag {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 20px; font-size: 11px; font-weight: 600;
+    }
+    .tag-pending { background: #fef3c7; color: #92400e; }
+    .tag-approved { background: #d1fae5; color: #065f46; }
+    .tag-rejected { background: #fee2e2; color: var(--danger); }
+    .tag-yes { background: #d1fae5; color: #065f46; }
+    .tag-no { background: #fee2e2; color: var(--danger); }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+
+    /* Actions */
+    .actions { display: flex; gap: 6px; }
+    .suggestion-answer { color: var(--text-secondary); font-size: 12px; margin-top: 4px; max-width: 500px; line-height: 1.5; }
+    .suggestion-reason { color: #9ca3af; font-size: 11px; font-style: italic; margin-top: 2px; }
+
+    /* Conversation cards */
+    .conv-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 10px; }
+    .conv-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .conv-meta { font-size: 11px; color: var(--text-secondary); }
+    .conv-msg { margin: 4px 0; font-size: 13px; }
+    .conv-msg-user { color: var(--text); }
+    .conv-msg-ai { color: var(--text-secondary); }
+    .conv-msg strong { font-weight: 600; }
+
+    .patterns { list-style: none; }
+    .patterns li {
+      padding: 10px 16px; margin-bottom: 6px;
+      background: var(--surface); border-radius: 8px; box-shadow: var(--shadow);
+      font-size: 13px; color: var(--text);
+      border-left: 3px solid var(--accent);
+    }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <div class="sidebar-logo">Product Intelligence</div>
+      <div class="sidebar-sub">Rolling Square SA</div>
+      <div class="sidebar-nav">
+        <a class="sidebar-link active" onclick="showTab('overview')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </a>
+        <a class="sidebar-link" onclick="showTab('conversations')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Conversations
+        </a>
+        <a class="sidebar-link" onclick="showTab('suggestions')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Suggestions
+        </a>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+        <div>
+          <h1 class="page-title">Analytics</h1>
+          <div class="page-subtitle" id="status">Loading...</div>
+        </div>
+        <div class="toolbar" style="margin-bottom:0">
+          <input type="date" id="date-picker" class="input" />
+          <button class="btn btn-secondary" onclick="loadDate()">Load</button>
+          <button class="btn btn-primary" onclick="runAnalysis()">Run Analysis</button>
+        </div>
+      </div>
+
+      <!-- Tab: Overview -->
+      <div id="tab-overview">
+        <div class="grid">
+          <div class="card">
+            <div class="card-label">Conversations</div>
+            <div class="card-value" id="total-conversations">&mdash;</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Messages</div>
+            <div class="card-value" id="total-messages">&mdash;</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Sentiment</div>
+            <div class="card-value" id="sentiment-label">&mdash;</div>
+            <div class="sentiment-bar" id="sentiment-bar"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">Escalation Rate</div>
+            <div class="card-value" id="escalation-rate">&mdash;</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Top Products</div>
+          <table>
+            <thead><tr><th>Product</th><th>Conversations</th><th>Common Questions</th></tr></thead>
+            <tbody id="products-body"><tr><td colspan="3" class="empty-state">No data yet</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Top Questions</div>
+          <table>
+            <thead><tr><th>Question</th><th>Count</th><th>Product</th><th>Answered Well</th></tr></thead>
+            <tbody id="questions-body"></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Gaps &amp; Weak Answers</div>
+          <table>
+            <thead><tr><th>Topic</th><th>Frequency</th><th>Example</th></tr></thead>
+            <tbody id="gaps-body"><tr><td colspan="3" class="empty-state">No gaps detected</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Patterns</div>
+          <ul class="patterns" id="patterns-list"></ul>
+        </div>
+      </div>
+
+      <!-- Tab: Conversations -->
+      <div id="tab-conversations" style="display:none">
+        <div class="section-title">Recent Conversations</div>
+        <div id="conversations-list"><div class="empty-state">No conversations yet</div></div>
+      </div>
+
+      <!-- Tab: Suggestions -->
+      <div id="tab-suggestions" style="display:none">
+        <div class="section-title">Suggested Actions</div>
+        <table>
+          <thead><tr><th>Type</th><th>Product</th><th>Question &amp; Answer</th><th>Freq</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="suggestions-body"><tr><td colspan="6" class="empty-state">No suggestions yet</td></tr></tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+
+<script>
+const SB = 'https://vzblfhwxismtqbjbfrke.supabase.co';
+const KEY = '[REDACTED-OLD-SERVICE-ROLE-JWT]';
+const H = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
+
+document.getElementById('date-picker').value = new Date().toISOString().split('T')[0];
+
+function showTab(name) {
+  ['overview','conversations','suggestions'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.sidebar-link').forEach((el,i) => {
+    el.classList.toggle('active', ['overview','conversations','suggestions'][i] === name);
+  });
+  if (name === 'conversations') loadConversations(document.getElementById('date-picker').value);
+  if (name === 'suggestions') loadSuggestions();
+}
+
+async function q(path) { return (await fetch(`${SB}/rest/v1/${path}`, { headers: H })).json(); }
+
+async function loadDate() {
+  const d = document.getElementById('date-picker').value;
+  await Promise.all([loadAnalytics(d), loadSuggestions(), loadConversations(d)]);
+}
+
+async function loadAnalytics(date) {
+  const data = await q(`daily_analytics?date=eq.${date}&select=*`);
+  const st = document.getElementById('status');
+
+  if (!data?.length) {
+    st.textContent = `No analytics for ${date} — click "Run Analysis"`;
+    ['total-conversations','total-messages','sentiment-label','escalation-rate'].forEach(id => document.getElementById(id).innerHTML = '&mdash;');
+    document.getElementById('sentiment-bar').innerHTML = '';
+    document.getElementById('products-body').innerHTML = '<tr><td colspan="3" class="empty-state">No data</td></tr>';
+    document.getElementById('questions-body').innerHTML = '';
+    document.getElementById('gaps-body').innerHTML = '<tr><td colspan="3" class="empty-state">No gaps</td></tr>';
+    document.getElementById('patterns-list').innerHTML = '';
+    return;
+  }
+
+  const a = data[0];
+  st.textContent = `Analytics for ${date}`;
+
+  document.getElementById('total-conversations').textContent = a.total_conversations || 0;
+  document.getElementById('total-messages').textContent = a.total_messages || 0;
+
+  const s = a.sentiment_summary || {};
+  const total = (s.positive||0) + (s.neutral||0) + (s.negative||0) + (s.frustrated||0);
+  if (total > 0) {
+    document.getElementById('sentiment-label').textContent = `${((s.positive||0)/total*100).toFixed(0)}% positive`;
+    document.getElementById('sentiment-bar').innerHTML = `
+      <div class="positive" style="flex:${s.positive||0}"></div>
+      <div class="neutral" style="flex:${s.neutral||0}"></div>
+      <div class="negative" style="flex:${s.negative||0}"></div>
+      <div class="frustrated" style="flex:${s.frustrated||0}"></div>`;
+  }
+
+  let analysis = {}; try { analysis = JSON.parse(a.raw_analysis||'{}'); } catch(e){}
+
+  document.getElementById('escalation-rate').textContent =
+    analysis.summary?.escalation_rate != null ? `${(analysis.summary.escalation_rate*100).toFixed(0)}%` : '0%';
+
+  const products = a.top_products || [];
+  document.getElementById('products-body').innerHTML = products.length === 0
+    ? '<tr><td colspan="3" class="empty-state">No product data</td></tr>'
+    : products.map(p => `<tr><td><strong>${p.product}</strong></td><td>${p.conversations}</td><td>${(p.common_questions||[]).join(', ')}</td></tr>`).join('');
+
+  const questions = a.top_questions || [];
+  document.getElementById('questions-body').innerHTML = questions.map(q => `<tr>
+    <td>${q.question}</td><td>${q.count}</td><td>${q.product||'General'}</td>
+    <td><span class="tag ${q.was_answered_well ? 'tag-yes' : 'tag-no'}">${q.was_answered_well ? 'Yes' : 'No'}</span></td>
+  </tr>`).join('');
+
+  const gaps = a.unanswered_topics || [];
+  document.getElementById('gaps-body').innerHTML = gaps.length === 0
+    ? '<tr><td colspan="3" class="empty-state">No gaps detected</td></tr>'
+    : gaps.map(g => `<tr><td>${g.topic}</td><td>${g.frequency||'—'}</td><td style="color:var(--text-secondary);font-size:12px">${g.example||'—'}</td></tr>`).join('');
+
+  const patterns = analysis.patterns || [];
+  document.getElementById('patterns-list').innerHTML = patterns.length === 0
+    ? '<li class="empty-state">No patterns detected</li>'
+    : patterns.map(p => `<li>${p}</li>`).join('');
+}
+
+async function loadSuggestions() {
+  const data = await q('suggestions?select=*&order=created_at.desc&limit=50');
+  const body = document.getElementById('suggestions-body');
+  if (!data?.length) { body.innerHTML = '<tr><td colspan="6" class="empty-state">No suggestions yet</td></tr>'; return; }
+
+  body.innerHTML = data.map(s => `<tr>
+    <td><span class="tag tag-pending">${s.type.replace('_',' ')}</span></td>
+    <td>${s.product_handle || 'General'}</td>
+    <td>
+      <strong>${s.question}</strong>
+      <div class="suggestion-answer">${s.suggested_answer}</div>
+      <div class="suggestion-reason">${s.source||''}</div>
+    </td>
+    <td>${s.frequency}</td>
+    <td><span class="tag tag-${s.status}">${s.status}</span></td>
+    <td>${s.status === 'pending' ? `<div class="actions">
+      <button class="btn btn-approve btn-sm" onclick="updateSugg(${s.id},'approved')">Approve</button>
+      <button class="btn btn-reject btn-sm" onclick="updateSugg(${s.id},'rejected')">Reject</button>
+    </div>` : '—'}</td>
+  </tr>`).join('');
+}
+
+async function loadConversations(date) {
+  const data = await q(`conversations?select=*&created_at=gte.${date}T00:00:00Z&created_at=lt.${date}T23:59:59Z&order=created_at.desc&limit=30`);
+  const c = document.getElementById('conversations-list');
+  if (!data?.length) { c.innerHTML = '<div class="empty-state">No conversations for this date</div>'; return; }
+
+  c.innerHTML = data.map(cv => {
+    const msgs = (cv.messages||[]).map(m =>
+      `<div class="conv-msg ${m.role==='user'?'conv-msg-user':'conv-msg-ai'}"><strong>${m.role==='user'?'Customer':'AI'}:</strong> ${m.content.slice(0,300)}${m.content.length>300?'...':''}</div>`
+    ).join('');
+    return `<div class="conv-card">
+      <div class="conv-header">
+        <span class="conv-meta">${cv.product_title||'Global'} &middot; ${cv.page_type}</span>
+        <span class="conv-meta">${new Date(cv.created_at).toLocaleTimeString()}</span>
+      </div>${msgs}</div>`;
+  }).join('');
+}
+
+async function updateSugg(id, status) {
+  await fetch(`${SB}/rest/v1/suggestions?id=eq.${id}`, {
+    method: 'PATCH', headers: H,
+    body: JSON.stringify({ status, approved_by:'dashboard', approved_at: new Date().toISOString() }),
+  });
+  loadSuggestions();
+}
+
+async function runAnalysis() {
+  const date = document.getElementById('date-picker').value;
+  const btn = event.target;
+  btn.textContent = 'Analyzing...'; btn.disabled = true;
+  try {
+    const r = await fetch(`${SB}/functions/v1/analyze?date=${date}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const result = await r.json();
+    console.log('Analysis:', result);
+    await loadDate();
+  } catch(e) { console.error(e); }
+  btn.textContent = 'Run Analysis'; btn.disabled = false;
+}
+
+loadDate();
+</script>
+</body>
+</html>
