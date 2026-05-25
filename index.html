@@ -6,6 +6,7 @@
   <title>Product Intelligence | Rolling Square SA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -259,10 +260,60 @@
       .sidebar { display: none; }
       .main { margin-left: 0; }
     }
+
+    /* Login overlay */
+    .login-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .login-card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow-lg); padding: 36px 32px;
+      width: 100%; max-width: 380px;
+    }
+    .login-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .login-card .login-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+    .login-card .modal-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 6px; }
+    .login-card .modal-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; background: var(--surface); color: var(--text); margin-bottom: 14px; }
+    .login-card .modal-input:focus { outline: none; border-color: var(--accent); }
+    .login-card .btn { width: 100%; padding: 11px; font-size: 14px; margin-top: 4px; }
+    .login-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+    .login-error.show { display: block; }
+    .login-brand { font-size: 11px; color: var(--text-secondary); margin-top: 18px; text-align: center; letter-spacing: 0.4px; }
+
+    /* User chip in sidebar */
+    .user-chip {
+      margin-top: auto; padding: 12px; border-radius: 8px;
+      background: rgba(255,255,255,0.06); font-size: 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .user-chip-email { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.85; }
+    .user-chip-logout {
+      background: transparent; border: 1px solid rgba(255,255,255,0.2);
+      color: white; font-size: 11px; padding: 4px 10px; border-radius: 6px;
+      cursor: pointer; font-family: inherit; font-weight: 600;
+    }
+    .user-chip-logout:hover { background: rgba(255,255,255,0.1); }
   </style>
 </head>
 <body>
-  <div class="app">
+  <!-- Login overlay (shown until user is authenticated) -->
+  <div id="login-overlay" class="login-overlay" style="display:none">
+    <form class="login-card" id="login-form" onsubmit="return handleLogin(event)">
+      <h2>Product Intelligence</h2>
+      <div class="login-sub">Sign in to continue</div>
+      <div id="login-error" class="login-error"></div>
+      <label class="modal-label" for="login-email">Email</label>
+      <input class="modal-input" type="email" id="login-email" autocomplete="username" required>
+      <label class="modal-label" for="login-password">Password</label>
+      <input class="modal-input" type="password" id="login-password" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit" id="login-btn">Sign in</button>
+      <div class="login-brand">Rolling Square SA</div>
+    </form>
+  </div>
+
+  <div class="app" id="app" style="display:none">
     <nav class="sidebar">
       <div class="sidebar-logo">Product Intelligence</div>
       <div class="sidebar-sub">Rolling Square SA</div>
@@ -284,6 +335,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2"/></svg>
           Memory
         </a>
+      </div>
+      <div class="user-chip">
+        <span class="user-chip-email" id="user-chip-email"></span>
+        <button class="user-chip-logout" type="button" onclick="handleLogout()">Logout</button>
       </div>
     </nav>
 
@@ -634,13 +689,97 @@
 
 <script>
 const SB = 'https://vzblfhwxismtqbjbfrke.supabase.co';
-const KEY = '[REDACTED-OLD-SERVICE-ROLE-JWT]';
+const KEY = 'sb_publishable_wjxzNbNTE0mR3bG72HkYtg_xFnV7ZeV';
+
+// Supabase Auth client (uses localStorage to persist session)
+const sb = window.supabase.createClient(SB, KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'pi-dashboard-auth' }
+});
+
+// Mutable headers object; Authorization is replaced with the user's access_token after login.
 const H = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
+let currentUser = null;
+
+function applySession(session) {
+  if (session?.access_token) {
+    H['Authorization'] = `Bearer ${session.access_token}`;
+    currentUser = session.user;
+  } else {
+    H['Authorization'] = `Bearer ${KEY}`;
+    currentUser = null;
+  }
+}
+
+function showApp() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-chip-email').textContent = currentUser?.email || '';
+}
+
+function showLogin(errorMsg) {
+  document.getElementById('app').style.display = 'none';
+  const overlay = document.getElementById('login-overlay');
+  overlay.style.display = 'flex';
+  const err = document.getElementById('login-error');
+  if (errorMsg) { err.textContent = errorMsg; err.classList.add('show'); }
+  else { err.classList.remove('show'); }
+  setTimeout(() => document.getElementById('login-email')?.focus(), 50);
+}
+
+async function handleLogin(ev) {
+  ev.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  document.getElementById('login-error').classList.remove('show');
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    applySession(data.session);
+    showApp();
+    document.getElementById('login-password').value = '';
+    initDashboard();
+  } catch (e) {
+    const err = document.getElementById('login-error');
+    err.textContent = e.message || 'Login failed';
+    err.classList.add('show');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+  return false;
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  applySession(null);
+  showLogin();
+}
+
+sb.auth.onAuthStateChange((_event, session) => {
+  applySession(session);
+  if (!session) showLogin();
+});
+
+function initDashboard() {
+  document.getElementById('date-picker').value = new Date().toISOString().split('T')[0];
+  loadDate();
+}
+
+// Bootstrap: check for existing session, otherwise show login.
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (data?.session) {
+    applySession(data.session);
+    showApp();
+    initDashboard();
+  } else {
+    showLogin();
+  }
+})();
 
 let allSuggestions = [];
 let currentFilter = 'all';
-
-document.getElementById('date-picker').value = new Date().toISOString().split('T')[0];
 
 // Toast notifications
 function toast(msg, type = 'success') {
@@ -812,7 +951,7 @@ async function applySuggestion(id, action, btn) {
   try {
     const resp = await fetch(`${SB}/functions/v1/apply-suggestion`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': H['Authorization'], 'apikey': KEY },
       body: JSON.stringify({ id, action }),
     });
     const result = await resp.json();
@@ -868,7 +1007,7 @@ async function runAnalysis() {
   const btn = event.target;
   btn.textContent = 'Analyzing...'; btn.disabled = true;
   try {
-    const r = await fetch(`${SB}/functions/v1/analyze?date=${date}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const r = await fetch(`${SB}/functions/v1/analyze?date=${date}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': H['Authorization'], 'apikey': KEY } });
     const result = await r.json();
     console.log('Analysis:', result);
     if (result.success) {
@@ -1170,7 +1309,6 @@ async function deleteMemoryRule() {
   }
 }
 
-loadDate();
 </script>
 </body>
 </html>
