@@ -78,11 +78,12 @@
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover { background: var(--border); }
-    .btn-approve { background: #d1fae5; color: #065f46; }
-    .btn-approve:hover { background: #a7f3d0; }
-    .btn-reject { background: #fee2e2; color: var(--danger); }
+    .btn-accept { background: #d1fae5; color: #065f46; font-weight: 700; }
+    .btn-accept:hover { background: #a7f3d0; }
+    .btn-reject { background: #fee2e2; color: var(--danger); font-weight: 700; }
     .btn-reject:hover { background: #fecaca; }
     .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Inputs */
     .input, .select {
@@ -96,7 +97,7 @@
     .section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
     table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
     th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
-    td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 13px; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; font-size: 13px; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
 
@@ -110,14 +111,30 @@
     .tag-rejected { background: #fee2e2; color: var(--danger); }
     .tag-yes { background: #d1fae5; color: #065f46; }
     .tag-no { background: #fee2e2; color: var(--danger); }
+    .tag-faq { background: #e0e7ff; color: #3730a3; }
+    .tag-description { background: #fce7f3; color: #9d174d; }
+    .tag-metafield { background: #ecfccb; color: #3f6212; }
 
     /* Toolbar */
     .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
 
-    /* Actions */
-    .actions { display: flex; gap: 6px; }
-    .suggestion-answer { color: var(--text-secondary); font-size: 12px; margin-top: 4px; max-width: 500px; line-height: 1.5; }
-    .suggestion-reason { color: #9ca3af; font-size: 11px; font-style: italic; margin-top: 2px; }
+    /* Suggestion cards */
+    .sugg-card {
+      background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: 20px; margin-bottom: 12px; border-left: 4px solid var(--border);
+      transition: border-color 0.15s;
+    }
+    .sugg-card[data-type="add_faq"] { border-left-color: #6366f1; }
+    .sugg-card[data-type="update_description"] { border-left-color: #ec4899; }
+    .sugg-card[data-type="fix_metafield"] { border-left-color: #84cc16; }
+    .sugg-card.applied { opacity: 0.5; border-left-color: var(--success); }
+    .sugg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .sugg-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .sugg-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+    .sugg-text { background: #f9fafb; border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text); line-height: 1.6; margin-bottom: 10px; white-space: pre-wrap; }
+    .sugg-reason { font-size: 12px; color: var(--text-secondary); font-style: italic; margin-bottom: 12px; }
+    .sugg-actions { display: flex; gap: 8px; align-items: center; }
+    .sugg-status { font-size: 12px; color: var(--text-secondary); }
 
     /* Conversation cards */
     .conv-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 10px; }
@@ -137,6 +154,106 @@
     }
 
     .empty-state { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px; }
+
+    /* Capabilities tab */
+    .cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .cap-grid { grid-template-columns: 1fr; } }
+    .cap-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+    .cap-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .cap-card.cap-can h3 { color: #065f46; }
+    .cap-card.cap-cannot h3 { color: var(--danger); }
+    .cap-card ul { list-style: none; padding: 0; }
+    .cap-card li { padding: 7px 0; font-size: 13px; line-height: 1.5; border-bottom: 1px solid #f3f4f6; }
+    .cap-card li:last-child { border-bottom: none; }
+    .cap-card li::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 10px; vertical-align: middle; }
+    .cap-can li::before { background: var(--success); }
+    .cap-cannot li::before { background: var(--danger); }
+    .cap-pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--bg); color: var(--text-secondary); margin-right: 6px; }
+
+    .kb-category { margin-bottom: 18px; }
+    .kb-category-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px; }
+    .kb-product-row { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #f3f4f6; font-size: 13px; align-items: center; }
+    .kb-product-row:last-child { border-bottom: none; }
+    .kb-product-name { font-weight: 600; }
+    .kb-product-handle { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--text-secondary); }
+    .kb-stat { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+    .kb-stat strong { color: var(--text); font-weight: 700; }
+
+    .tool-card { display: flex; gap: 12px; padding: 14px; border-radius: 8px; background: var(--bg); margin-bottom: 10px; }
+    .tool-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+    .tool-info h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .tool-info p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .tool-info code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; background: #fff; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+    .scope-banner { background: linear-gradient(135deg, #eef2ff, #fdf2f8); border: 1px solid #e0e7ff; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px; }
+    .scope-banner-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+    .scope-banner-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Memory rule cards */
+    .mem-rule { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; margin-bottom: 10px; border-left: 4px solid var(--border); transition: border-color 0.15s, opacity 0.2s; }
+    .mem-rule.inactive { opacity: 0.55; border-left-color: var(--text-secondary); }
+    .mem-rule.cat-scope { border-left-color: #6366f1; }
+    .mem-rule.cat-sensitive { border-left-color: var(--danger); }
+    .mem-rule.cat-identity { border-left-color: #8b5cf6; }
+    .mem-rule.cat-compatibility { border-left-color: #06b6d4; }
+    .mem-rule.cat-tone { border-left-color: #ec4899; }
+    .mem-rule.cat-competitor { border-left-color: #f97316; }
+    .mem-rule.cat-escalation { border-left-color: var(--warning); }
+    .mem-rule.cat-pricing { border-left-color: #84cc16; }
+    .mem-rule.cat-specs { border-left-color: #14b8a6; }
+    .mem-rule.cat-custom { border-left-color: var(--accent); }
+    .mem-rule-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+    .mem-rule-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .mem-rule-title { font-weight: 700; font-size: 14px; }
+    .mem-rule-content { font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; margin-bottom: 12px; }
+    .mem-rule-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .cat-tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--bg); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+    .cat-tag.cat-scope { background: #eef2ff; color: #4338ca; }
+    .cat-tag.cat-sensitive { background: #fee2e2; color: var(--danger); }
+    .cat-tag.cat-identity { background: #ede9fe; color: #6d28d9; }
+    .cat-tag.cat-compatibility { background: #cffafe; color: #155e75; }
+    .cat-tag.cat-tone { background: #fce7f3; color: #9d174d; }
+    .cat-tag.cat-competitor { background: #ffedd5; color: #9a3412; }
+    .cat-tag.cat-escalation { background: #fef3c7; color: #92400e; }
+    .cat-tag.cat-pricing { background: #ecfccb; color: #3f6212; }
+    .cat-tag.cat-specs { background: #ccfbf1; color: #115e59; }
+    .cat-tag.cat-custom { background: #ede9fe; color: #5b21b6; }
+
+    /* Toggle switch */
+    .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; transition: 0.2s; border-radius: 20px; }
+    .switch-slider::before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; transition: 0.2s; border-radius: 50%; }
+    .switch input:checked + .switch-slider { background: var(--success); }
+    .switch input:checked + .switch-slider::before { transform: translateX(16px); }
+
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .modal-backdrop.show { display: flex; }
+    .modal { background: var(--surface); border-radius: var(--radius); max-width: 620px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); padding: 24px; }
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .modal-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+    .modal-field { margin-bottom: 14px; }
+    .modal-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 6px; }
+    .modal-input, .modal-textarea, .modal-select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--surface); color: var(--text); }
+    .modal-input:focus, .modal-textarea:focus, .modal-select:focus { outline: none; border-color: var(--accent); }
+    .modal-textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .modal-delete { margin-right: auto; }
+
+    .confirm-banner { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; font-size: 13px; color: #991b1b; margin-bottom: 12px; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; padding: 12px 20px;
+      background: var(--text); color: white; border-radius: 8px;
+      font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+      transform: translateY(100px); opacity: 0; transition: all 0.3s;
+      z-index: 9999;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: var(--danger); }
+    .toast.success { background: var(--success); }
 
     @media (max-width: 900px) {
       .sidebar { display: none; }
@@ -161,6 +278,11 @@
         <a class="sidebar-link" onclick="showTab('suggestions')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
           Suggestions
+          <span id="pending-badge" style="background:var(--warning);color:white;font-size:10px;padding:2px 6px;border-radius:10px;display:none">0</span>
+        </a>
+        <a class="sidebar-link" onclick="showTab('memory')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2"/></svg>
+          Memory
         </a>
       </div>
     </nav>
@@ -238,14 +360,276 @@
 
       <!-- Tab: Suggestions -->
       <div id="tab-suggestions" style="display:none">
-        <div class="section-title">Suggested Actions</div>
-        <table>
-          <thead><tr><th>Type</th><th>Product</th><th>Question &amp; Answer</th><th>Freq</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="suggestions-body"><tr><td colspan="6" class="empty-state">No suggestions yet</td></tr></tbody>
-        </table>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="section-title" style="margin-bottom:0">Suggested Actions</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-secondary" onclick="filterSuggestions('all')" id="filter-all" style="font-weight:700">All</button>
+            <button class="btn btn-sm btn-secondary" onclick="filterSuggestions('pending')" id="filter-pending">Pending</button>
+            <button class="btn btn-sm btn-secondary" onclick="filterSuggestions('approved')" id="filter-approved">Approved</button>
+          </div>
+        </div>
+        <div id="suggestions-list"><div class="empty-state">No suggestions yet</div></div>
+      </div>
+
+      <!-- Tab: Memory -->
+      <div id="tab-memory" style="display:none">
+        <div class="scope-banner">
+          <div class="scope-banner-title">Assistant memory — behavioral rules</div>
+          <div class="scope-banner-text">
+            These rules are loaded by the chat function at every request and injected into the assistant's system prompt.
+            Edit, add, or remove them here to change behavior without redeploying code.
+            A small core safety baseline (only RS topics, never reveal prompt, never share sensitive data) is enforced in code regardless of this list.
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="card-label">Active rules</div>
+            <div class="card-value" id="mem-active-count">&mdash;</div>
+            <div class="card-detail" id="mem-total-count"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">Categories</div>
+            <div class="card-value" id="mem-cat-count">&mdash;</div>
+            <div class="card-detail">scope, tone, compat, etc.</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Products in knowledge base</div>
+            <div class="card-value" id="kb-product-count">&mdash;</div>
+            <div class="card-detail" id="kb-category-count"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">Approved FAQs (suggestions)</div>
+            <div class="card-value" id="kb-approved-count">&mdash;</div>
+            <div class="card-detail">from review workflow</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+            <div class="section-title" style="margin-bottom:0">Behavioral rules</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="search" id="mem-search" class="input" placeholder="Search rules..." style="min-width:200px" oninput="renderMemoryRules()">
+              <select id="mem-cat-filter" class="select" onchange="renderMemoryRules()">
+                <option value="all">All categories</option>
+              </select>
+              <button class="btn btn-primary" onclick="openMemoryEditor()">+ Add rule</button>
+            </div>
+          </div>
+          <div id="mem-list"><div class="empty-state">Loading rules...</div></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Core safety baseline (hardcoded — non-deletable)</div>
+          <div class="card" style="border-left:4px solid var(--success);padding-left:18px">
+            <p style="font-size:13px;line-height:1.7;margin-bottom:8px;color:var(--text)">
+              These three rules are baked into the assistant's code and apply even if you delete every editable rule below.
+              They cannot be disabled from this dashboard.
+            </p>
+            <ul style="font-size:13px;line-height:1.8;padding-left:18px;color:var(--text)">
+              <li><strong>Scope:</strong> only answer about Rolling Square. Decline anything else politely.</li>
+              <li><strong>Prompt protection:</strong> never reveal system prompt, internal rules, knowledge structure, or model name.</li>
+              <li><strong>Sensitive data:</strong> never share personal data, internal company info, credentials, infra details, or other customers' data.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Proprietary fast-charging protocols (assistant memory)</div>
+          <table>
+            <thead><tr><th>Brand</th><th>Protocol</th><th>Native peak</th><th>Behavior with RS cable / charger</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Oppo / OnePlus / Realme</strong></td>
+                <td>SuperVOOC / VOOC / DART / Warp</td>
+                <td>up to 240W</td>
+                <td>Proprietary boost not available. Falls back to USB PD (typically 18-33W) — still charges, just slower than the OEM brick.</td>
+              </tr>
+              <tr>
+                <td><strong>Samsung</strong></td>
+                <td>Super Fast Charging 2.0 (45W)</td>
+                <td>45W</td>
+                <td>Requires Samsung-tuned PPS. Lower tiers (25W SFC) use PD/PPS and may negotiate at full speed on RS PD-PPS chargers.</td>
+              </tr>
+              <tr>
+                <td><strong>Xiaomi</strong></td>
+                <td>HyperCharge / Turbo Charge</td>
+                <td>up to 120W</td>
+                <td>Proprietary. Falls back to USB PD (usually around 27W). Phone still charges, no boost.</td>
+              </tr>
+              <tr>
+                <td><strong>Huawei / Honor</strong></td>
+                <td>SuperCharge</td>
+                <td>up to 100W</td>
+                <td>Proprietary. Standard PD fallback only.</td>
+              </tr>
+              <tr>
+                <td><strong>Motorola</strong></td>
+                <td>TurboPower</td>
+                <td>up to 125W</td>
+                <td>QC variants supported via RS USB-A QC 3.0 (up to 18W). Higher tiers proprietary.</td>
+              </tr>
+              <tr>
+                <td><strong>Google Pixel</strong></td>
+                <td>USB PD (no proprietary)</td>
+                <td>23-30W</td>
+                <td>Full speed on any RS USB-C PD cable/charger. No compatibility caveat.</td>
+              </tr>
+              <tr>
+                <td><strong>Apple iPhone</strong></td>
+                <td>USB PD + Apple Fast Charging</td>
+                <td>20-27W</td>
+                <td>Full speed via USB-C to Lightning at PD, or USB-C to USB-C on iPhone 15+. Confirmed in product specs.</td>
+              </tr>
+              <tr>
+                <td><strong>Apple MacBook</strong></td>
+                <td>USB PD</td>
+                <td>30W (Air) – 140W (16" Pro)</td>
+                <td>Full speed on RS 100W cables (Air, Pro 13/14). 16" Pro charges but slower than 140W.</td>
+              </tr>
+              <tr>
+                <td><strong>Cameras (Sony, Canon, Nikon, Fujifilm)</strong></td>
+                <td>USB PD or Micro USB direct</td>
+                <td>varies</td>
+                <td>Modern bodies: USB-C PD works. Older bodies use Micro USB or proprietary; check before buying.</td>
+              </tr>
+              <tr>
+                <td><strong>GoPro Hero 11+</strong></td>
+                <td>USB PD (USB-C)</td>
+                <td>27W</td>
+                <td>Charges fine on any RS USB-C cable + PD charger.</td>
+              </tr>
+              <tr>
+                <td><strong>DJI drones / gimbals</strong></td>
+                <td>USB-C PD on newer, proprietary on older</td>
+                <td>varies</td>
+                <td>RC 2 / Mavic 3 series: USB PD. Older Spark / Mavic Pro: proprietary brick required.</td>
+              </tr>
+              <tr>
+                <td><strong>Steam Deck / ROG Ally / Switch</strong></td>
+                <td>USB PD</td>
+                <td>45-65W</td>
+                <td>Full PD support — works fully on RS cables and 65W+ chargers.</td>
+              </tr>
+              <tr>
+                <td><strong>Nintendo Switch (dock)</strong></td>
+                <td>USB PD (15V/2.6A)</td>
+                <td>~39W</td>
+                <td>Handheld charging works on any PD charger. Docked TV mode is officially Nintendo brick only.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Knowledge base by category</div>
+          <div id="kb-products"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Agentic tools available to the assistant</div>
+          <div class="card" style="padding:14px">
+            <div class="tool-card">
+              <div class="tool-icon">S</div>
+              <div class="tool-info">
+                <h4><code>search_products</code></h4>
+                <p>Searches across all Rolling Square products by keyword. Triggered when the current product context doesn't contain the answer (e.g. customer mentions another product).</p>
+              </div>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">F</div>
+              <div class="tool-info">
+                <h4><code>fetch_url</code></h4>
+                <p>Fetches a web page (HTTPS only) and extracts its text. Preferred for verifying product details from rollingsquare.com. 8s timeout, ~6000 char cap.</p>
+              </div>
+            </div>
+            <div class="tool-card" style="background:#fff7ed">
+              <div class="tool-icon" style="background:#f59e0b">!</div>
+              <div class="tool-info">
+                <h4>Tool-use loop</h4>
+                <p>Max 3 rounds of tool calls per question. After that the model must answer with what it has. Models tried in order: <code>claude-sonnet-4-20250514</code>, then <code>claude-3-haiku-20240307</code> as fallback.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Privacy &amp; data handling</div>
+          <div class="card">
+            <ul style="list-style:none;padding:0">
+              <li style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px">
+                <span class="cap-pill">Sessions</span> <code>session_id</code> is hashed before storage. No PII is logged.
+              </li>
+              <li style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px">
+                <span class="cap-pill">Storage</span> <code>conversations</code> table keeps only: session hash, product handle, page type, messages.
+              </li>
+              <li style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px">
+                <span class="cap-pill">History</span> Up to 10 prior turns are sent to the model per request. Older messages are truncated.
+              </li>
+              <li style="padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px">
+                <span class="cap-pill">Rate</span> Widget rate-limits sends to 1 per 1.5s, messages capped at 2000 characters.
+              </li>
+              <li style="padding:8px 0;font-size:13px">
+                <span class="cap-pill">CORS</span> Endpoint accepts any origin. Consider locking it to <code>rollingsquare.com</code> in production.
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
     </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Memory rule editor modal -->
+  <div class="modal-backdrop" id="mem-modal" onclick="if(event.target===this) closeMemoryEditor()">
+    <div class="modal">
+      <h2 id="mem-modal-title">New rule</h2>
+      <div class="modal-sub">Operator memory rules are loaded by the chat function at every request. Changes apply on the next message.</div>
+      <input type="hidden" id="mem-edit-id">
+      <div class="modal-field">
+        <label class="modal-label">Category</label>
+        <select id="mem-edit-category" class="modal-select">
+          <option value="scope">Scope</option>
+          <option value="sensitive">Sensitive info</option>
+          <option value="identity">Identity</option>
+          <option value="compatibility">Compatibility</option>
+          <option value="tone">Tone</option>
+          <option value="competitor">Competitor</option>
+          <option value="escalation">Escalation</option>
+          <option value="pricing">Pricing</option>
+          <option value="specs">Specs guardrail</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Title</label>
+        <input type="text" id="mem-edit-title" class="modal-input" placeholder="Short rule title, e.g. 'Never share discount codes'" maxlength="200">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Content</label>
+        <textarea id="mem-edit-content" class="modal-textarea" placeholder="Detailed instruction. Be specific. Example: 'Never share, hint at, or speculate about discount codes...'"></textarea>
+      </div>
+      <div class="modal-field" style="display:flex;align-items:center;gap:14px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600">
+          <label class="switch"><input type="checkbox" id="mem-edit-active" checked><span class="switch-slider"></span></label>
+          Active
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)">
+          Order:
+          <input type="number" id="mem-edit-sort" class="modal-input" style="width:80px;padding:6px 10px" value="100" min="0" max="9999">
+        </label>
+      </div>
+      <div id="mem-modal-confirm" style="display:none" class="confirm-banner">
+        Confirm delete? This permanently removes the rule. The core safety baseline remains active.
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-reject btn-sm modal-delete" id="mem-delete-btn" onclick="deleteMemoryRule()" style="display:none">Delete</button>
+        <button class="btn btn-secondary" onclick="closeMemoryEditor()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveMemoryRule()" id="mem-save-btn">Save</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -253,17 +637,30 @@ const SB = 'https://vzblfhwxismtqbjbfrke.supabase.co';
 const KEY = '[REDACTED-OLD-SERVICE-ROLE-JWT]';
 const H = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
+let allSuggestions = [];
+let currentFilter = 'all';
+
 document.getElementById('date-picker').value = new Date().toISOString().split('T')[0];
 
+// Toast notifications
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
 function showTab(name) {
-  ['overview','conversations','suggestions'].forEach(t => {
+  const tabs = ['overview','conversations','suggestions','memory'];
+  tabs.forEach(t => {
     document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
   });
   document.querySelectorAll('.sidebar-link').forEach((el,i) => {
-    el.classList.toggle('active', ['overview','conversations','suggestions'][i] === name);
+    el.classList.toggle('active', tabs[i] === name);
   });
   if (name === 'conversations') loadConversations(document.getElementById('date-picker').value);
   if (name === 'suggestions') loadSuggestions();
+  if (name === 'memory') loadMemory();
 }
 
 async function q(path) { return (await fetch(`${SB}/rest/v1/${path}`, { headers: H })).json(); }
@@ -278,7 +675,7 @@ async function loadAnalytics(date) {
   const st = document.getElementById('status');
 
   if (!data?.length) {
-    st.textContent = `No analytics for ${date} — click "Run Analysis"`;
+    st.textContent = `No analytics for ${date}. Click "Run Analysis"`;
     ['total-conversations','total-messages','sentiment-label','escalation-rate'].forEach(id => document.getElementById(id).innerHTML = '&mdash;');
     document.getElementById('sentiment-bar').innerHTML = '';
     document.getElementById('products-body').innerHTML = '<tr><td colspan="3" class="empty-state">No data</td></tr>';
@@ -324,7 +721,7 @@ async function loadAnalytics(date) {
   const gaps = a.unanswered_topics || [];
   document.getElementById('gaps-body').innerHTML = gaps.length === 0
     ? '<tr><td colspan="3" class="empty-state">No gaps detected</td></tr>'
-    : gaps.map(g => `<tr><td>${g.topic}</td><td>${g.frequency||'—'}</td><td style="color:var(--text-secondary);font-size:12px">${g.example||'—'}</td></tr>`).join('');
+    : gaps.map(g => `<tr><td>${g.topic}</td><td>${g.frequency||''}</td><td style="color:var(--text-secondary);font-size:12px">${g.example||''}</td></tr>`).join('');
 
   const patterns = analysis.patterns || [];
   document.getElementById('patterns-list').innerHTML = patterns.length === 0
@@ -332,26 +729,121 @@ async function loadAnalytics(date) {
     : patterns.map(p => `<li>${p}</li>`).join('');
 }
 
-async function loadSuggestions() {
-  const data = await q('suggestions?select=*&order=created_at.desc&limit=50');
-  const body = document.getElementById('suggestions-body');
-  if (!data?.length) { body.innerHTML = '<tr><td colspan="6" class="empty-state">No suggestions yet</td></tr>'; return; }
+// Type labels and colors
+const TYPE_CONFIG = {
+  'add_faq': { label: 'FAQ', tagClass: 'tag-faq', icon: '?' },
+  'update_description': { label: 'Description', tagClass: 'tag-description', icon: 'T' },
+  'fix_metafield': { label: 'Metafield', tagClass: 'tag-metafield', icon: '#' },
+};
 
-  body.innerHTML = data.map(s => `<tr>
-    <td><span class="tag tag-pending">${s.type.replace('_',' ')}</span></td>
-    <td>${s.product_handle || 'General'}</td>
-    <td>
-      <strong>${s.question}</strong>
-      <div class="suggestion-answer">${s.suggested_answer}</div>
-      <div class="suggestion-reason">${s.source||''}</div>
-    </td>
-    <td>${s.frequency}</td>
-    <td><span class="tag tag-${s.status}">${s.status}</span></td>
-    <td>${s.status === 'pending' ? `<div class="actions">
-      <button class="btn btn-approve btn-sm" onclick="updateSugg(${s.id},'approved')">Approve</button>
-      <button class="btn btn-reject btn-sm" onclick="updateSugg(${s.id},'rejected')">Reject</button>
-    </div>` : '—'}</td>
-  </tr>`).join('');
+function renderSuggestions(suggestions) {
+  const container = document.getElementById('suggestions-list');
+  if (!suggestions?.length) {
+    container.innerHTML = '<div class="empty-state">No suggestions yet</div>';
+    return;
+  }
+
+  container.innerHTML = suggestions.map(s => {
+    const cfg = TYPE_CONFIG[s.type] || { label: s.type, tagClass: 'tag-pending', icon: '?' };
+    const isPending = s.status === 'pending';
+
+    const title = s.title || s.question || '';
+    const text = s.proposed_text || s.suggested_answer || '';
+    const reason = s.reason || s.source || '';
+
+    return `<div class="sugg-card ${!isPending ? 'applied' : ''}" data-type="${s.type}" data-id="${s.id}">
+      <div class="sugg-header">
+        <div class="sugg-meta">
+          <span class="tag ${cfg.tagClass}">${cfg.label}</span>
+          <span class="tag tag-${s.status}">${s.status}</span>
+          ${s.product_handle ? `<span style="font-size:12px;color:var(--text-secondary)">${s.product_handle}</span>` : ''}
+          ${s.frequency > 1 ? `<span style="font-size:11px;color:var(--warning);font-weight:600">${s.frequency}x reported</span>` : ''}
+        </div>
+      </div>
+      <div class="sugg-title">${escHtml(title)}</div>
+      <div class="sugg-text">${escHtml(text)}</div>
+      ${reason ? `<div class="sugg-reason">${escHtml(reason)}</div>` : ''}
+      ${isPending ? `<div class="sugg-actions">
+        <button class="btn btn-accept btn-sm" onclick="applySuggestion(${s.id}, 'accept', this)">Accept</button>
+        <button class="btn btn-reject btn-sm" onclick="applySuggestion(${s.id}, 'reject', this)">Reject</button>
+      </div>` : `<div class="sugg-status">${s.status === 'approved' ? 'Applied ' + (s.approved_at ? new Date(s.approved_at).toLocaleDateString() : '') : ''}</div>`}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function filterSuggestions(filter) {
+  currentFilter = filter;
+  ['all','pending','approved'].forEach(f => {
+    document.getElementById('filter-'+f).style.fontWeight = f === filter ? '700' : '500';
+  });
+  const filtered = filter === 'all' ? allSuggestions : allSuggestions.filter(s => s.status === filter);
+  renderSuggestions(filtered);
+}
+
+async function loadSuggestions() {
+  const data = await q('suggestions?select=*&order=created_at.desc&limit=100');
+  allSuggestions = data || [];
+
+  // Update pending badge
+  const pending = allSuggestions.filter(s => s.status === 'pending').length;
+  const badge = document.getElementById('pending-badge');
+  if (pending > 0) {
+    badge.textContent = pending;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  filterSuggestions(currentFilter);
+}
+
+async function applySuggestion(id, action, btn) {
+  const card = btn.closest('.sugg-card');
+  const buttons = card.querySelectorAll('.btn');
+  buttons.forEach(b => b.disabled = true);
+  btn.textContent = action === 'accept' ? 'Applying...' : 'Removing...';
+
+  try {
+    const resp = await fetch(`${SB}/functions/v1/apply-suggestion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action }),
+    });
+    const result = await resp.json();
+
+    if (result.success) {
+      if (action === 'accept') {
+        if (result.auto_applied === false && result.text) {
+          // No Shopify token: copy text to clipboard
+          try { await navigator.clipboard.writeText(result.text); } catch(_){}
+          toast(result.message + ' Text copied to clipboard!', 'success');
+        } else {
+          toast(result.message || 'Suggestion applied!', 'success');
+        }
+      } else {
+        toast('Suggestion removed', 'success');
+      }
+      // Animate out and reload
+      card.style.transition = 'all 0.3s';
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(20px)';
+      setTimeout(() => loadSuggestions(), 300);
+    } else {
+      toast(result.error || 'Something went wrong', 'error');
+      buttons.forEach(b => b.disabled = false);
+      btn.textContent = action === 'accept' ? 'Accept' : 'Reject';
+    }
+  } catch (e) {
+    toast('Network error: ' + e.message, 'error');
+    buttons.forEach(b => b.disabled = false);
+    btn.textContent = action === 'accept' ? 'Accept' : 'Reject';
+  }
 }
 
 async function loadConversations(date) {
@@ -361,7 +853,7 @@ async function loadConversations(date) {
 
   c.innerHTML = data.map(cv => {
     const msgs = (cv.messages||[]).map(m =>
-      `<div class="conv-msg ${m.role==='user'?'conv-msg-user':'conv-msg-ai'}"><strong>${m.role==='user'?'Customer':'AI'}:</strong> ${m.content.slice(0,300)}${m.content.length>300?'...':''}</div>`
+      `<div class="conv-msg ${m.role==='user'?'conv-msg-user':'conv-msg-ai'}"><strong>${m.role==='user'?'Customer':'AI'}:</strong> ${escHtml(m.content.slice(0,300))}${m.content.length>300?'...':''}</div>`
     ).join('');
     return `<div class="conv-card">
       <div class="conv-header">
@@ -369,14 +861,6 @@ async function loadConversations(date) {
         <span class="conv-meta">${new Date(cv.created_at).toLocaleTimeString()}</span>
       </div>${msgs}</div>`;
   }).join('');
-}
-
-async function updateSugg(id, status) {
-  await fetch(`${SB}/rest/v1/suggestions?id=eq.${id}`, {
-    method: 'PATCH', headers: H,
-    body: JSON.stringify({ status, approved_by:'dashboard', approved_at: new Date().toISOString() }),
-  });
-  loadSuggestions();
 }
 
 async function runAnalysis() {
@@ -387,9 +871,303 @@ async function runAnalysis() {
     const r = await fetch(`${SB}/functions/v1/analyze?date=${date}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     const result = await r.json();
     console.log('Analysis:', result);
+    if (result.success) {
+      toast(`Analysis complete: ${result.conversations_analyzed} conversations, ${result.suggestions_created} new suggestions`);
+    } else {
+      toast(result.message || 'No data to analyze', 'error');
+    }
     await loadDate();
-  } catch(e) { console.error(e); }
+  } catch(e) { toast('Analysis failed: ' + e.message, 'error'); }
   btn.textContent = 'Run Analysis'; btn.disabled = false;
+}
+
+// ── Capabilities tab ───────────────────────────────────────────
+// Mirror of supabase/functions/chat/knowledge.ts product list.
+// Counts come from the source file; keep this list in sync if knowledge.ts is changed.
+const KB_PRODUCTS = [
+  { category: 'Cables — inCharge®', items: [
+    { name: 'inCharge® X', handle: 'incharge-x', tagline: '100W 6-in-1 keyring cable', specs: 13, compat: 7, faqs: 4, warnings: 3 },
+    { name: 'inCharge® XS 240W', handle: 'incharge®-xs-240w-4in1-keyring-cable', tagline: '240W ultra-fast 4-in-1', specs: 10, compat: 5, faqs: 3, warnings: 3 },
+    { name: 'inCharge® XL 30cm', handle: 'xls', tagline: '100W 6-in-1 travel cable, 30 cm', specs: 10, compat: 4, faqs: 1, warnings: 1 },
+    { name: 'inCharge® XL 2m', handle: 'xlm', tagline: '100W 6-in-1 cable, 2 m', specs: 11, compat: 4, faqs: 0, warnings: 1 },
+    { name: 'inCharge® XL 3m', handle: 'xll', tagline: '100W 6-in-1 cable, 3 m', specs: 6, compat: 3, faqs: 0, warnings: 1 },
+    { name: 'Essential Cable', handle: 'incharge-essential-100w-usb-c-to-c-cable', tagline: 'USB-C to USB-C, 100W', specs: 4, compat: 4, faqs: 1, warnings: 1 },
+    { name: 'Essential 2in1 Cable', handle: 'incharge-2in1-essential-100w-usb-c-to-c-cable', tagline: 'Dual USB-C charge', specs: 3, compat: 2, faqs: 1, warnings: 1 },
+    { name: 'inCharge® Mini', handle: 'incharge-mini-1', tagline: 'The smallest cable ever made', specs: 4, compat: 2, faqs: 1, warnings: 2 },
+    { name: 'inCharge® 6', handle: 'incharge-6', tagline: '15W 6-in-1 (legacy)', specs: 3, compat: 1, faqs: 1, warnings: 2 },
+  ]},
+  { category: 'GaN Chargers', items: [
+    { name: 'Supertiny 65W GaN', handle: 'supertiny-the-smallest-65w-gan-charger-ever', tagline: 'Smallest 65W GaN charger', specs: 6, compat: 7, faqs: 2, warnings: 3 },
+    { name: 'Essential GaN 65W', handle: 'gan-65w', tagline: '65W GaN charger', specs: 3, compat: 2, faqs: 0, warnings: 1 },
+    { name: 'Essential GaN 100W', handle: 'gan-100w', tagline: '100W 4-port GaN charger', specs: 6, compat: 4, faqs: 2, warnings: 2 },
+    { name: 'Essential GaN 30W', handle: 'gan-30w', tagline: '30W compact GaN', specs: 3, compat: 3, faqs: 0, warnings: 1 },
+  ]},
+  { category: 'Travel Adapters', items: [
+    { name: 'Pocket Travel Charger', handle: 'pocket-travel-adapter', tagline: 'US/EU/UK/AU plugs, 200+ countries', specs: 4, compat: 2, faqs: 1, warnings: 1 },
+    { name: 'Travel Adapter Quick Charger', handle: 'travel-adapter-quick-charger', tagline: '45W travel adapter', specs: 2, compat: 1, faqs: 0, warnings: 1 },
+  ]},
+  { category: 'Bluetooth Trackers', items: [
+    { name: 'AirCard™ Pro Dual', handle: 'aircardpro-dual', tagline: 'Card-sized — Apple + Google (one network at a time)', specs: 10, compat: 3, faqs: 5, warnings: 3 },
+    { name: 'AirNotch™ Pro Dual', handle: 'airnotchpro-dual', tagline: 'Keyring, IP68, replaceable batteries (one network at a time)', specs: 10, compat: 3, faqs: 3, warnings: 2 },
+    { name: 'AirCard™ Pro', handle: 'aircard-pro-android-apple-bluetooth-tracker', tagline: 'Card-sized — Android &amp; Apple (one network at a time)', specs: 3, compat: 3, faqs: 1, warnings: 1 },
+    { name: 'AirNotch™ Pro', handle: 'airnotch-pro-android-apple-bluetooth-tracker', tagline: 'Keyring — Android &amp; Apple (one network at a time)', specs: 4, compat: 3, faqs: 1, warnings: 1 },
+    { name: 'AirCard™ (original)', handle: 'aircard', tagline: 'Wallet tracker — Apple Find My only', specs: 6, compat: 2, faqs: 2, warnings: 2 },
+  ]},
+  { category: 'Power Banks', items: [
+    { name: 'TAU® 2', handle: 'tau-2-a-new-kind-of-power-bank', tagline: '2000mAh keyring emergency', specs: 7, compat: 4, faqs: 2, warnings: 2 },
+    { name: 'Essential Power Bank 5,000mAh', handle: 'power-bank-5000-mah', tagline: 'Pocket daily carry', specs: 1, compat: 1, faqs: 0, warnings: 0 },
+    { name: 'Essential Power Bank 10,000mAh', handle: 'power-bank-10000-mah', tagline: 'Everyday essential', specs: 1, compat: 1, faqs: 0, warnings: 0 },
+    { name: 'Essential Power Bank 20,000mAh', handle: 'power-bank-20000-mah', tagline: 'Max capacity, LCD', specs: 3, compat: 2, faqs: 1, warnings: 1 },
+  ]},
+  { category: 'EDGE® Pro System (MagSafe)', items: [
+    { name: 'EDGE® Pro Full Kit', handle: 'edgepro', tagline: 'Core + Charger + Light', specs: 8, compat: 5, faqs: 3, warnings: 2 },
+    { name: 'EDGE® Pro Core', handle: 'edgepro-core', tagline: 'MagSafe phone/tablet mount', specs: 3, compat: 3, faqs: 0, warnings: 1 },
+    { name: 'EDGE® Pro Wireless Charger', handle: 'edgepro-charger', tagline: '15W MagSafe wireless charger', specs: 4, compat: 3, faqs: 0, warnings: 1 },
+    { name: 'EDGE® Pro Light', handle: 'edgepro-light', tagline: '1000-lumen portable MagSafe light', specs: 5, compat: 2, faqs: 0, warnings: 0 },
+    { name: 'MagSafe Car Mount', handle: 'magsafe-car-mount', tagline: 'Magnetic car mount', specs: 1, compat: 2, faqs: 0, warnings: 0 },
+  ]},
+  { category: 'Accessories', items: [
+    { name: 'AirCard™ Pouch', handle: 'aircard™-pouch', tagline: 'Nylon sleeve with hook &amp; velcro', specs: 2, compat: 1, faqs: 0, warnings: 0 },
+    { name: 'AirCard™ Notebook', handle: 'aircard™-notebook', tagline: 'A5 notebook with AirCard slot', specs: 2, compat: 1, faqs: 0, warnings: 1 },
+    { name: 'Rolling Square Lanyard', handle: 'rslanyard', tagline: 'Lanyard with NFC + QR Lost Mode', specs: 1, compat: 0, faqs: 0, warnings: 0 },
+  ]},
+];
+
+// ── Memory rules (CRUD) ────────────────────────────────────────
+let allMemoryRules = [];
+
+const CATEGORY_LABELS = {
+  scope: 'Scope',
+  sensitive: 'Sensitive',
+  identity: 'Identity',
+  compatibility: 'Compatibility',
+  tone: 'Tone',
+  competitor: 'Competitor',
+  escalation: 'Escalation',
+  pricing: 'Pricing',
+  specs: 'Specs',
+  custom: 'Custom',
+};
+
+async function loadMemory() {
+  // Stats: KB
+  const productCount = KB_PRODUCTS.reduce((n, c) => n + c.items.length, 0);
+  const categoryCount = KB_PRODUCTS.length;
+  document.getElementById('kb-product-count').textContent = productCount;
+  document.getElementById('kb-category-count').textContent = `${categoryCount} categories`;
+
+  // Approved FAQs
+  try {
+    const data = await q('suggestions?select=id&type=eq.add_faq&status=eq.approved');
+    document.getElementById('kb-approved-count').textContent = (data || []).length;
+  } catch { document.getElementById('kb-approved-count').textContent = '0'; }
+
+  // Memory rules
+  try {
+    const rules = await q('memory_rules?select=*&order=category.asc,sort_order.asc');
+    allMemoryRules = rules || [];
+  } catch (e) {
+    allMemoryRules = [];
+    toast('Memory rules table not found. Run the migration first.', 'error');
+  }
+
+  const active = allMemoryRules.filter(r => r.active).length;
+  const total = allMemoryRules.length;
+  document.getElementById('mem-active-count').textContent = active;
+  document.getElementById('mem-total-count').textContent = `${total - active} disabled · ${total} total`;
+  const cats = new Set(allMemoryRules.map(r => r.category));
+  document.getElementById('mem-cat-count').textContent = cats.size;
+
+  // Populate filter dropdown
+  const filterSel = document.getElementById('mem-cat-filter');
+  const currentVal = filterSel.value || 'all';
+  const catCounts = {};
+  for (const r of allMemoryRules) catCounts[r.category] = (catCounts[r.category] || 0) + 1;
+  filterSel.innerHTML = '<option value="all">All categories (' + total + ')</option>' +
+    Object.keys(CATEGORY_LABELS)
+      .filter(c => catCounts[c])
+      .map(c => `<option value="${c}">${CATEGORY_LABELS[c]} (${catCounts[c]})</option>`)
+      .join('');
+  filterSel.value = currentVal;
+
+  renderMemoryRules();
+}
+
+function renderMemoryRules() {
+  const filter = document.getElementById('mem-cat-filter').value;
+  const search = (document.getElementById('mem-search').value || '').toLowerCase().trim();
+  const list = document.getElementById('mem-list');
+
+  let filtered = allMemoryRules;
+  if (filter !== 'all') filtered = filtered.filter(r => r.category === filter);
+  if (search) filtered = filtered.filter(r =>
+    (r.title || '').toLowerCase().includes(search) ||
+    (r.content || '').toLowerCase().includes(search)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state">No rules match. Use the "+ Add rule" button to create one.</div>';
+    return;
+  }
+
+  // Group by category for display
+  const grouped = {};
+  for (const r of filtered) {
+    if (!grouped[r.category]) grouped[r.category] = [];
+    grouped[r.category].push(r);
+  }
+
+  list.innerHTML = Object.entries(grouped).map(([cat, items]) => `
+    <div style="margin-bottom:18px">
+      <div class="kb-category-title">${CATEGORY_LABELS[cat] || cat} (${items.length})</div>
+      ${items.map(r => `
+        <div class="mem-rule cat-${r.category} ${r.active ? '' : 'inactive'}" data-id="${r.id}">
+          <div class="mem-rule-header">
+            <div class="mem-rule-meta">
+              <span class="cat-tag cat-${r.category}">${CATEGORY_LABELS[r.category] || r.category}</span>
+              <span class="mem-rule-title">${escHtml(r.title)}</span>
+              ${!r.active ? '<span class="tag tag-rejected">Disabled</span>' : ''}
+            </div>
+            <div class="mem-rule-actions">
+              <label class="switch" title="${r.active ? 'Disable' : 'Enable'}">
+                <input type="checkbox" ${r.active ? 'checked' : ''} onchange="toggleMemoryRule(${r.id}, this.checked)">
+                <span class="switch-slider"></span>
+              </label>
+              <button class="btn btn-sm btn-secondary" onclick="openMemoryEditor(${r.id})">Edit</button>
+            </div>
+          </div>
+          <div class="mem-rule-content">${escHtml(r.content)}</div>
+          <div style="font-size:11px;color:var(--text-secondary)">
+            Order ${r.sort_order} · updated ${r.updated_at ? new Date(r.updated_at).toLocaleDateString() : 'never'}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function openMemoryEditor(id) {
+  const modal = document.getElementById('mem-modal');
+  const isEdit = id != null;
+  document.getElementById('mem-modal-title').textContent = isEdit ? 'Edit rule' : 'New rule';
+  document.getElementById('mem-edit-id').value = isEdit ? id : '';
+  document.getElementById('mem-modal-confirm').style.display = 'none';
+  document.getElementById('mem-delete-btn').style.display = isEdit ? 'inline-flex' : 'none';
+  document.getElementById('mem-delete-btn').textContent = 'Delete';
+
+  if (isEdit) {
+    const r = allMemoryRules.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('mem-edit-category').value = r.category;
+    document.getElementById('mem-edit-title').value = r.title || '';
+    document.getElementById('mem-edit-content').value = r.content || '';
+    document.getElementById('mem-edit-active').checked = !!r.active;
+    document.getElementById('mem-edit-sort').value = r.sort_order ?? 100;
+  } else {
+    document.getElementById('mem-edit-category').value = 'custom';
+    document.getElementById('mem-edit-title').value = '';
+    document.getElementById('mem-edit-content').value = '';
+    document.getElementById('mem-edit-active').checked = true;
+    document.getElementById('mem-edit-sort').value = 100;
+  }
+
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('mem-edit-title').focus(), 50);
+}
+
+function closeMemoryEditor() {
+  document.getElementById('mem-modal').classList.remove('show');
+}
+
+async function saveMemoryRule() {
+  const id = document.getElementById('mem-edit-id').value;
+  const payload = {
+    category: document.getElementById('mem-edit-category').value,
+    title: document.getElementById('mem-edit-title').value.trim(),
+    content: document.getElementById('mem-edit-content').value.trim(),
+    active: document.getElementById('mem-edit-active').checked,
+    sort_order: parseInt(document.getElementById('mem-edit-sort').value, 10) || 100,
+  };
+
+  if (!payload.title || !payload.content) {
+    toast('Title and content are required', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('mem-save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const url = id
+      ? `${SB}/rest/v1/memory_rules?id=eq.${id}`
+      : `${SB}/rest/v1/memory_rules`;
+    const method = id ? 'PATCH' : 'POST';
+    const resp = await fetch(url, {
+      method,
+      headers: { ...H, 'Prefer': 'return=minimal' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    toast(id ? 'Rule updated' : 'Rule created', 'success');
+    closeMemoryEditor();
+    await loadMemory();
+  } catch (e) {
+    toast('Save failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+  }
+}
+
+async function toggleMemoryRule(id, active) {
+  try {
+    const resp = await fetch(`${SB}/rest/v1/memory_rules?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...H, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ active }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const r = allMemoryRules.find(x => x.id === id);
+    if (r) r.active = active;
+    toast(active ? 'Rule enabled' : 'Rule disabled', 'success');
+    // Recompute stats without full reload
+    const activeCount = allMemoryRules.filter(x => x.active).length;
+    document.getElementById('mem-active-count').textContent = activeCount;
+    document.getElementById('mem-total-count').textContent = `${allMemoryRules.length - activeCount} disabled · ${allMemoryRules.length} total`;
+    renderMemoryRules();
+  } catch (e) {
+    toast('Toggle failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteMemoryRule() {
+  const id = document.getElementById('mem-edit-id').value;
+  if (!id) return;
+  const banner = document.getElementById('mem-modal-confirm');
+  const btn = document.getElementById('mem-delete-btn');
+  if (banner.style.display !== 'block') {
+    banner.style.display = 'block';
+    btn.textContent = 'Confirm delete';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Deleting...';
+  try {
+    const resp = await fetch(`${SB}/rest/v1/memory_rules?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: H,
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    toast('Rule deleted', 'success');
+    closeMemoryEditor();
+    await loadMemory();
+  } catch (e) {
+    toast('Delete failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Delete';
+  }
 }
 
 loadDate();
