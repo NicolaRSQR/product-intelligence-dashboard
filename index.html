@@ -348,8 +348,16 @@
           <h1 class="page-title">Analytics</h1>
           <div class="page-subtitle" id="status">Loading...</div>
         </div>
-        <div class="toolbar" style="margin-bottom:0">
-          <input type="date" id="date-picker" class="input" />
+        <div class="toolbar" style="margin-bottom:0;align-items:center">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)">
+            <span>From</span>
+            <input type="date" id="date-from" class="input" />
+            <span>To</span>
+            <input type="date" id="date-to" class="input" />
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="setRange(0)">Today</button>
+          <button class="btn btn-secondary btn-sm" onclick="setRange(7)">Last 7d</button>
+          <button class="btn btn-secondary btn-sm" onclick="setRange(30)">Last 30d</button>
           <button class="btn btn-secondary" onclick="loadDate()">Load</button>
           <button class="btn btn-primary" onclick="runAnalysis()">Run Analysis</button>
         </div>
@@ -762,8 +770,20 @@ sb.auth.onAuthStateChange((_event, session) => {
 });
 
 function initDashboard() {
-  document.getElementById('date-picker').value = new Date().toISOString().split('T')[0];
+  // Default range: last 7 days inclusive of today
+  setRange(7, /*skipLoad=*/true);
   loadDate();
+}
+
+function isoDate(d) { return d.toISOString().split('T')[0]; }
+
+function setRange(daysBack, skipLoad) {
+  const today = new Date();
+  const from = new Date(today);
+  if (daysBack > 0) from.setDate(today.getDate() - daysBack + 1);
+  document.getElementById('date-from').value = isoDate(from);
+  document.getElementById('date-to').value = isoDate(today);
+  if (!skipLoad) loadDate();
 }
 
 // Bootstrap: check for existing session, otherwise show login.
@@ -789,6 +809,13 @@ function toast(msg, type = 'success') {
   setTimeout(() => t.className = 'toast', 3000);
 }
 
+function getRange() {
+  return {
+    from: document.getElementById('date-from').value,
+    to: document.getElementById('date-to').value,
+  };
+}
+
 function showTab(name) {
   const tabs = ['overview','conversations','suggestions','memory'];
   tabs.forEach(t => {
@@ -797,7 +824,8 @@ function showTab(name) {
   document.querySelectorAll('.sidebar-link').forEach((el,i) => {
     el.classList.toggle('active', tabs[i] === name);
   });
-  if (name === 'conversations') loadConversations(document.getElementById('date-picker').value);
+  const r = getRange();
+  if (name === 'conversations') loadConversations(r.from, r.to);
   if (name === 'suggestions') loadSuggestions();
   if (name === 'memory') loadMemory();
 }
@@ -805,67 +833,155 @@ function showTab(name) {
 async function q(path) { return (await fetch(`${SB}/rest/v1/${path}`, { headers: H })).json(); }
 
 async function loadDate() {
-  const d = document.getElementById('date-picker').value;
-  await Promise.all([loadAnalytics(d), loadSuggestions(), loadConversations(d)]);
-}
-
-async function loadAnalytics(date) {
-  const data = await q(`daily_analytics?date=eq.${date}&select=*`);
-  const st = document.getElementById('status');
-
-  if (!data?.length) {
-    st.textContent = `No analytics for ${date}. Click "Run Analysis"`;
-    ['total-conversations','total-messages','sentiment-label','escalation-rate'].forEach(id => document.getElementById(id).innerHTML = '&mdash;');
-    document.getElementById('sentiment-bar').innerHTML = '';
-    document.getElementById('products-body').innerHTML = '<tr><td colspan="3" class="empty-state">No data</td></tr>';
-    document.getElementById('questions-body').innerHTML = '';
-    document.getElementById('gaps-body').innerHTML = '<tr><td colspan="3" class="empty-state">No gaps</td></tr>';
-    document.getElementById('patterns-list').innerHTML = '';
+  const r = getRange();
+  if (!r.from || !r.to || r.from > r.to) {
+    toast('Invalid date range', 'error');
     return;
   }
+  await Promise.all([loadAnalytics(r.from, r.to), loadSuggestions(), loadConversations(r.from, r.to)]);
+}
 
-  const a = data[0];
-  st.textContent = `Analytics for ${date}`;
+// Aggregate "top products" by product_title across raw conversations
+function topProductsFromConversations(conversations) {
+  const counts = new Map();
+  for (const c of conversations) {
+    const key = c.product_title || 'Global / Non-product page';
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([product, conversations]) => ({ product, conversations, common_questions: [] }));
+}
 
-  document.getElementById('total-conversations').textContent = a.total_conversations || 0;
-  document.getElementById('total-messages').textContent = a.total_messages || 0;
+// Merge analytics rows (one per day) into aggregate for the whole range
+function aggregateAnalytics(rows) {
+  const agg = {
+    total_conversations: 0,
+    total_messages: 0,
+    sentiment_summary: { positive:0, neutral:0, negative:0, frustrated:0 },
+    top_products: new Map(),
+    top_questions: [],
+    unanswered_topics: [],
+    patterns: [],
+    escalation_rates: [],
+  };
+  for (const r of rows) {
+    agg.total_conversations += r.total_conversations || 0;
+    agg.total_messages += r.total_messages || 0;
+    const s = r.sentiment_summary || {};
+    ['positive','neutral','negative','frustrated'].forEach(k => agg.sentiment_summary[k] += s[k] || 0);
+    for (const p of (r.top_products || [])) {
+      const prev = agg.top_products.get(p.product) || { product: p.product, conversations: 0, common_questions: [] };
+      prev.conversations += p.conversations || 0;
+      prev.common_questions = [...new Set([...prev.common_questions, ...(p.common_questions || [])])];
+      agg.top_products.set(p.product, prev);
+    }
+    agg.top_questions.push(...(r.top_questions || []));
+    agg.unanswered_topics.push(...(r.unanswered_topics || []));
+    try {
+      const raw = JSON.parse(r.raw_analysis || '{}');
+      if (Array.isArray(raw.patterns)) agg.patterns.push(...raw.patterns);
+      if (raw.summary?.escalation_rate != null) agg.escalation_rates.push(raw.summary.escalation_rate);
+    } catch (_) {}
+  }
+  agg.top_products = [...agg.top_products.values()].sort((a,b) => b.conversations - a.conversations).slice(0, 10);
+  agg.top_questions.sort((a,b) => (b.count||0) - (a.count||0));
+  agg.top_questions = agg.top_questions.slice(0, 20);
+  agg.unanswered_topics.sort((a,b) => (b.frequency||0) - (a.frequency||0));
+  agg.unanswered_topics = agg.unanswered_topics.slice(0, 20);
+  agg.patterns = [...new Set(agg.patterns)].slice(0, 20);
+  return agg;
+}
 
-  const s = a.sentiment_summary || {};
-  const total = (s.positive||0) + (s.neutral||0) + (s.negative||0) + (s.frustrated||0);
-  if (total > 0) {
-    document.getElementById('sentiment-label').textContent = `${((s.positive||0)/total*100).toFixed(0)}% positive`;
-    document.getElementById('sentiment-bar').innerHTML = `
-      <div class="positive" style="flex:${s.positive||0}"></div>
-      <div class="neutral" style="flex:${s.neutral||0}"></div>
-      <div class="negative" style="flex:${s.negative||0}"></div>
-      <div class="frustrated" style="flex:${s.frustrated||0}"></div>`;
+async function loadAnalytics(from, to) {
+  const st = document.getElementById('status');
+  const sameDay = from === to;
+  st.textContent = sameDay ? `Analytics for ${from}` : `Analytics for ${from} → ${to}`;
+
+  // 1) Always load LIVE counts from conversations table
+  const convs = await q(`conversations?select=id,message_count,product_title,product_handle,created_at&created_at=gte.${from}T00:00:00Z&created_at=lt.${to}T23:59:59Z&order=created_at.desc&limit=2000`);
+  const liveConvCount = convs?.length || 0;
+  const liveMsgCount = (convs || []).reduce((s, c) => s + (c.message_count || 0), 0);
+
+  document.getElementById('total-conversations').textContent = liveConvCount;
+  document.getElementById('total-messages').textContent = liveMsgCount;
+
+  // 2) Fetch any analyzed days in the range and aggregate
+  const analyzed = await q(`daily_analytics?date=gte.${from}&date=lte.${to}&select=*&order=date.asc`);
+  const hasAnalysis = analyzed && analyzed.length > 0;
+  const agg = hasAnalysis ? aggregateAnalytics(analyzed) : null;
+
+  // Sentiment (only when we have LLM analysis)
+  const sentLabel = document.getElementById('sentiment-label');
+  const sentBar = document.getElementById('sentiment-bar');
+  if (hasAnalysis) {
+    const s = agg.sentiment_summary;
+    const total = s.positive + s.neutral + s.negative + s.frustrated;
+    if (total > 0) {
+      sentLabel.textContent = `${((s.positive)/total*100).toFixed(0)}% positive`;
+      sentBar.innerHTML = `
+        <div class="positive" style="flex:${s.positive}"></div>
+        <div class="neutral" style="flex:${s.neutral}"></div>
+        <div class="negative" style="flex:${s.negative}"></div>
+        <div class="frustrated" style="flex:${s.frustrated}"></div>`;
+    } else {
+      sentLabel.innerHTML = '&mdash;'; sentBar.innerHTML = '';
+    }
+  } else {
+    sentLabel.innerHTML = '&mdash;'; sentBar.innerHTML = '';
   }
 
-  let analysis = {}; try { analysis = JSON.parse(a.raw_analysis||'{}'); } catch(e){}
+  // Escalation
+  const escEl = document.getElementById('escalation-rate');
+  if (hasAnalysis && agg.escalation_rates.length) {
+    const avg = agg.escalation_rates.reduce((a,b)=>a+b,0) / agg.escalation_rates.length;
+    escEl.textContent = `${(avg*100).toFixed(0)}%`;
+  } else {
+    escEl.innerHTML = '&mdash;';
+  }
 
-  document.getElementById('escalation-rate').textContent =
-    analysis.summary?.escalation_rate != null ? `${(analysis.summary.escalation_rate*100).toFixed(0)}%` : '0%';
+  // Top Products: prefer analyzed (richer), fall back to live counts
+  const productsBody = document.getElementById('products-body');
+  const products = hasAnalysis && agg.top_products.length ? agg.top_products : topProductsFromConversations(convs || []);
+  if (!products.length) {
+    productsBody.innerHTML = '<tr><td colspan="3" class="empty-state">No conversations in this range</td></tr>';
+  } else {
+    productsBody.innerHTML = products.map(p =>
+      `<tr><td><strong>${escHtml(p.product)}</strong></td><td>${p.conversations}</td><td>${(p.common_questions||[]).map(escHtml).join(', ') || '<span style="color:var(--text-secondary);font-size:12px">Run Analysis for question themes</span>'}</td></tr>`
+    ).join('');
+  }
 
-  const products = a.top_products || [];
-  document.getElementById('products-body').innerHTML = products.length === 0
-    ? '<tr><td colspan="3" class="empty-state">No product data</td></tr>'
-    : products.map(p => `<tr><td><strong>${p.product}</strong></td><td>${p.conversations}</td><td>${(p.common_questions||[]).join(', ')}</td></tr>`).join('');
+  // Top Questions (LLM only)
+  const qsBody = document.getElementById('questions-body');
+  if (hasAnalysis && agg.top_questions.length) {
+    qsBody.innerHTML = agg.top_questions.map(qq => `<tr>
+      <td>${escHtml(qq.question)}</td><td>${qq.count||''}</td><td>${escHtml(qq.product||'General')}</td>
+      <td><span class="tag ${qq.was_answered_well ? 'tag-yes' : 'tag-no'}">${qq.was_answered_well ? 'Yes' : 'No'}</span></td>
+    </tr>`).join('');
+  } else {
+    qsBody.innerHTML = liveConvCount > 0
+      ? '<tr><td colspan="4" class="empty-state">Click "Run Analysis" to extract question themes</td></tr>'
+      : '<tr><td colspan="4" class="empty-state">No conversations in this range</td></tr>';
+  }
 
-  const questions = a.top_questions || [];
-  document.getElementById('questions-body').innerHTML = questions.map(q => `<tr>
-    <td>${q.question}</td><td>${q.count}</td><td>${q.product||'General'}</td>
-    <td><span class="tag ${q.was_answered_well ? 'tag-yes' : 'tag-no'}">${q.was_answered_well ? 'Yes' : 'No'}</span></td>
-  </tr>`).join('');
+  // Gaps (LLM only)
+  const gapsBody = document.getElementById('gaps-body');
+  if (hasAnalysis && agg.unanswered_topics.length) {
+    gapsBody.innerHTML = agg.unanswered_topics.map(g =>
+      `<tr><td>${escHtml(g.topic)}</td><td>${g.frequency||''}</td><td style="color:var(--text-secondary);font-size:12px">${escHtml(g.example||'')}</td></tr>`
+    ).join('');
+  } else {
+    gapsBody.innerHTML = '<tr><td colspan="3" class="empty-state">No gaps detected</td></tr>';
+  }
 
-  const gaps = a.unanswered_topics || [];
-  document.getElementById('gaps-body').innerHTML = gaps.length === 0
-    ? '<tr><td colspan="3" class="empty-state">No gaps detected</td></tr>'
-    : gaps.map(g => `<tr><td>${g.topic}</td><td>${g.frequency||''}</td><td style="color:var(--text-secondary);font-size:12px">${g.example||''}</td></tr>`).join('');
-
-  const patterns = analysis.patterns || [];
-  document.getElementById('patterns-list').innerHTML = patterns.length === 0
-    ? '<li class="empty-state">No patterns detected</li>'
-    : patterns.map(p => `<li>${p}</li>`).join('');
+  // Patterns (LLM only)
+  const patternsEl = document.getElementById('patterns-list');
+  if (hasAnalysis && agg.patterns.length) {
+    patternsEl.innerHTML = agg.patterns.map(p => `<li>${escHtml(p)}</li>`).join('');
+  } else {
+    patternsEl.innerHTML = '<li class="empty-state">No patterns detected. Click "Run Analysis" to generate.</li>';
+  }
 }
 
 // Type labels and colors
@@ -985,10 +1101,10 @@ async function applySuggestion(id, action, btn) {
   }
 }
 
-async function loadConversations(date) {
-  const data = await q(`conversations?select=*&created_at=gte.${date}T00:00:00Z&created_at=lt.${date}T23:59:59Z&order=created_at.desc&limit=30`);
+async function loadConversations(from, to) {
+  const data = await q(`conversations?select=*&created_at=gte.${from}T00:00:00Z&created_at=lt.${to}T23:59:59Z&order=created_at.desc&limit=200`);
   const c = document.getElementById('conversations-list');
-  if (!data?.length) { c.innerHTML = '<div class="empty-state">No conversations for this date</div>'; return; }
+  if (!data?.length) { c.innerHTML = '<div class="empty-state">No conversations in this range</div>'; return; }
 
   c.innerHTML = data.map(cv => {
     const msgs = (cv.messages||[]).map(m =>
@@ -996,28 +1112,62 @@ async function loadConversations(date) {
     ).join('');
     return `<div class="conv-card">
       <div class="conv-header">
-        <span class="conv-meta">${cv.product_title||'Global'} &middot; ${cv.page_type}</span>
-        <span class="conv-meta">${new Date(cv.created_at).toLocaleTimeString()}</span>
+        <span class="conv-meta">${escHtml(cv.product_title||'Global')} &middot; ${escHtml(cv.page_type||'')}</span>
+        <span class="conv-meta">${new Date(cv.created_at).toLocaleString()}</span>
       </div>${msgs}</div>`;
   }).join('');
 }
 
+// Enumerate every YYYY-MM-DD between from and to (inclusive)
+function datesInRange(from, to) {
+  const out = [];
+  const d = new Date(from + 'T00:00:00Z');
+  const end = new Date(to + 'T00:00:00Z');
+  while (d <= end) {
+    out.push(d.toISOString().split('T')[0]);
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
+
 async function runAnalysis() {
-  const date = document.getElementById('date-picker').value;
+  const r = getRange();
+  if (!r.from || !r.to || r.from > r.to) {
+    toast('Invalid date range', 'error');
+    return;
+  }
   const btn = event.target;
-  btn.textContent = 'Analyzing...'; btn.disabled = true;
+  btn.disabled = true;
+  const dates = datesInRange(r.from, r.to);
+  let totalConvs = 0, totalSugg = 0, failed = 0;
   try {
-    const r = await fetch(`${SB}/functions/v1/analyze?date=${date}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': H['Authorization'], 'apikey': KEY } });
-    const result = await r.json();
-    console.log('Analysis:', result);
-    if (result.success) {
-      toast(`Analysis complete: ${result.conversations_analyzed} conversations, ${result.suggestions_created} new suggestions`);
-    } else {
-      toast(result.message || 'No data to analyze', 'error');
+    for (let i = 0; i < dates.length; i++) {
+      btn.textContent = `Analyzing ${i+1}/${dates.length}...`;
+      try {
+        const resp = await fetch(`${SB}/functions/v1/analyze?date=${dates[i]}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': H['Authorization'], 'apikey': KEY },
+        });
+        const result = await resp.json();
+        if (result.success) {
+          totalConvs += result.conversations_analyzed || 0;
+          totalSugg += result.suggestions_created || 0;
+        } else if (!result.message?.includes('No conversations')) {
+          failed++;
+          console.warn(`Analyze ${dates[i]}:`, result);
+        }
+      } catch (e) {
+        failed++;
+        console.error(`Analyze ${dates[i]} failed:`, e);
+      }
     }
+    if (failed > 0) toast(`Analysis done with ${failed} failures · ${totalConvs} conversations, ${totalSugg} new suggestions`, 'error');
+    else toast(`Analysis complete: ${totalConvs} conversations, ${totalSugg} new suggestions`);
     await loadDate();
-  } catch(e) { toast('Analysis failed: ' + e.message, 'error'); }
-  btn.textContent = 'Run Analysis'; btn.disabled = false;
+  } finally {
+    btn.textContent = 'Run Analysis';
+    btn.disabled = false;
+  }
 }
 
 // ── Capabilities tab ───────────────────────────────────────────
